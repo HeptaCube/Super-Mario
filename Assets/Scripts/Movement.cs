@@ -37,6 +37,7 @@ public class Movement : MonoBehaviour
 
     // [플레이어] 버튼 인식과 관련된 변수.
     int recognizedKeyInput;
+    int blockedDirection;
 
 
     private void Start()
@@ -49,13 +50,12 @@ public class Movement : MonoBehaviour
         getPlayerController = GetComponent<PlayerController>();
     }
 
-
-
     // 필요한 메소드들을 매 프레임마다 불러와줌.
     private void Update()
     {
-        OnJump();
         OnMove();
+        OnJump();
+
         // recognizedKeyInput 을 갱신해줌.
         recognizedKeyInput = this.getPlayerController.recognizedKey;
     }
@@ -67,7 +67,6 @@ public class Movement : MonoBehaviour
         float clampedJumpVertical = Mathf.Clamp(jumpVelocity.y, -0.01f, 0f);
         bool isRangedJumpVertical = clampedJumpVertical == jumpVelocity.y;
 
-
         // 점프 거리가 점프최대거리보다 많다면 리턴함. (점프 최대거리 제한)
         if (isRangedJumpVertical && this.recognizedKeyInput == 1)
         {
@@ -77,7 +76,6 @@ public class Movement : MonoBehaviour
             startJumpHeight = transform.position.y;
             getRigidbody2D.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
         }
-
 
         if (this.recognizedKeyInput == 2)
         {
@@ -114,7 +112,6 @@ public class Movement : MonoBehaviour
         }
     }
 
-
     // 제한된 점프를 구현하는 코루틴 메소드.
     void InvokeStopJump(float sec)
     {
@@ -131,7 +128,7 @@ public class Movement : MonoBehaviour
     // 점프를 멈추는 메소드.
     void StopJump()
     {
-        getRigidbody2D.velocity = new Vector2(1 * Input.GetAxis("MoveX") * moveSpeed, 1);
+        getRigidbody2D.velocity = new Vector2(Input.GetAxis("MoveX") * moveSpeed, 1);
 
         // 혹시 몰라 남겨둔 코드.
         // getRigidbody2D.AddForce(Vector2.down * jumpPower);
@@ -139,7 +136,7 @@ public class Movement : MonoBehaviour
     }
 
 
-    // 좌우 방향을 반환해주는 메소드.
+    // 좌우 방향을 반환해주는 프로퍼티 (프로퍼티도 메소드의 종류 중 하나이다).
     Vector2 MoveDirection
     {
         get
@@ -148,10 +145,43 @@ public class Movement : MonoBehaviour
             return (Vector2.right * Input.GetAxis("MoveX"));
         }
     }
-
+    
     void OnMove()
-    {
+    {   
+        RaycastHit2D rayHitRight = Physics2D.Raycast(getRigidbody2D.position, Vector2.right, 0.5f, LayerMask.GetMask("Ground"));
+        RaycastHit2D rayHitLeft = Physics2D.Raycast(getRigidbody2D.position, Vector2.left, 0.5f, LayerMask.GetMask("Ground"));
+
+        if (rayHitRight.collider != null && MoveDirection.x > 0)
+        {
+            return;
+        }
+        
+        else if (rayHitLeft.collider != null && MoveDirection.x < 0)
+        {
+            return;
+        }
+        
         // 반환받은 MoveDirection Vector2 메소드의 값으로 좌우로 움직이게 해주는 코드.
         getRigidbody2D.velocity = new Vector2(MoveDirection.x * moveSpeed, getRigidbody2D.velocity.y);
     }
+
+    // 안쓰는 코드.
+    // private void OnCollisionEnter2D(Collision2D target) 
+    // {
+    //     if (target.gameObject.layer != LayerMask.NameToLayer("Ground"))
+    //     {   
+    //         return;
+    //     }
+        
+    //     bool isGroundVertical, isGroundSide;
+    //     // foreach 반목문으로 contacts의 (    )를 contact 변수에 반복할 때마다 담아준다.
+    //     foreach (ContactPoint2D contact in target.contacts)
+    //     {
+    //         isGroundVertical = contact.normal.y > 0;
+    //         isGroundSide = contact.normal.x != 0 || isGroundVertical;
+
+    //         print($"땅 : {isGroundVertical}" );
+    //         print($"사이드 : {isGroundSide}, ({contact.normal.x}, {contact.normal.y})");
+    //     }
+    // }
 }
