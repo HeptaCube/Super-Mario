@@ -1,2 +1,2 @@
 # Super-Mario
-Still work in progress.
+Test Project
